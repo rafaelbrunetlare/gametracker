@@ -3,53 +3,55 @@
 import pandas as pd
 import numpy as np
 
-
 def transform_players(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Transforme le DataFrame des joueurs.
-
-    Étapes :
-    1. Supprime les doublons sur player_id
-    2. Nettoie les espaces des username
-    3. Convertit les dates d'inscription
-    4. Remplace les emails invalides (sans '@') par None
+    Nettoie et prépare les données des joueurs.
     """
+    # 1. Copie pour éviter les warnings et suppression des doublons
     df = df.drop_duplicates(subset="player_id").copy()
 
-    # Nettoyage des username
+    # 2. Nettoyage des chaînes de caractères
     df["username"] = df["username"].astype(str).str.strip()
 
-    # Conversion de la date d'inscription
-    df["registration_date"] = pd.to_datetime(df["registration_date"], errors="coerce")
-
-    # Emails invalides -> None
+    # 3. Traitement des emails (Sujet : nettoyage des données sales)
+    # On met à None les emails invalides
     df["email"] = df["email"].apply(lambda x: x if isinstance(x, str) and "@" in x else None)
+    
+    # IMPORTANT : On supprime les lignes où l'email ou le pseudo est absent
+    # Cela évite l'erreur 'Column email cannot be null'
+    df = df.dropna(subset=["email", "username"])
+
+    # 4. Conversion de la date (on garde le nom 'registration_date')
+    # Si le fichier CSV utilise un autre nom, on le renomme ici
+    if "join_date" in df.columns:
+        df = df.rename(columns={"join_date": "registration_date"})
+        
+    df["registration_date"] = pd.to_datetime(df["registration_date"], errors="coerce")
+    
+    # On supprime les lignes avec des dates invalides
+    df = df.dropna(subset=["registration_date"])
 
     return df
 
-
 def transform_scores(df: pd.DataFrame, valid_player_ids: list) -> pd.DataFrame:
     """
-    Transforme le DataFrame des scores.
-
-    Étapes :
-    1. Supprime les doublons sur score_id
-    2. Convertit les dates et les scores en types appropriés
-    3. Supprime les lignes avec un score négatif ou nul
-    4. Supprime les scores dont le player_id n'est pas dans valid_player_ids
+    Nettoie les scores et gère les contraintes métier du sujet.
     """
     df = df.drop_duplicates(subset="score_id").copy()
 
-    # Conversion des colonnes
+    # Conversion forcée en types numériques et dates
     df["score"] = pd.to_numeric(df["score"], errors="coerce")
-    df["duration_minutes"] = pd.to_numeric(df["duration_minutes"], errors="coerce")
-    df["played_at"] = pd.to_datetime(df["played_at"], errors="coerce")
     df["player_id"] = pd.to_numeric(df["player_id"], errors="coerce")
+    df["played_at"] = pd.to_datetime(df["played_at"], errors="coerce")
 
-    # Supprimer les scores <= 0
-    df = df[df["score"] > 0]
+    # 1. Contrainte Sujet : "ni scores négatifs"
+    df = df[df["score"] >= 0]
 
-    # Supprimer les références orphelines
+    # 2. Suppression des valeurs manquantes critiques
+    df = df.dropna(subset=["score", "player_id", "played_at"])
+
+    # 3. Contrainte Sujet : "ni références orphelines"
+    # On ne garde que les scores dont le joueur existe dans notre liste nettoyée
     df = df[df["player_id"].isin(valid_player_ids)]
 
     return df

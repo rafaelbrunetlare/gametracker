@@ -1,36 +1,24 @@
 """Module de chargement des données ETL dans MySQL."""
 
 import pandas as pd
-from mysql.connector import Error
-
 
 def clean_for_mysql(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Convertit les NaN/NaT en None pour être compatible avec MySQL.
-    """
+    """Convertit les types Pandas (NaN, NaT) en None pour MySQL."""
     return df.where(pd.notnull(df), None)
 
-
 def load_players(df: pd.DataFrame, conn):
-    """
-    Insère ou met à jour les joueurs dans la table 'players'.
-    
-    Args:
-        df (pd.DataFrame): DataFrame des joueurs transformés.
-        conn: Connexion MySQL active.
-    """
+    """Insère les joueurs transformés dans la table 'players'."""
     df = clean_for_mysql(df)
     cursor = conn.cursor()
 
+    # Requête utilisant 'registration_date' (conforme à ta structure SQL)
     sql = """
-    INSERT INTO players (player_id, username, email, registration_date, country, level)
-    VALUES (%s, %s, %s, %s, %s, %s)
+    INSERT INTO players (player_id, username, email, registration_date)
+    VALUES (%s, %s, %s, %s)
     ON DUPLICATE KEY UPDATE
         username = VALUES(username),
         email = VALUES(email),
-        registration_date = VALUES(registration_date),
-        country = VALUES(country),
-        level = VALUES(level)
+        registration_date = VALUES(registration_date)
     """
 
     for _, row in df.iterrows():
@@ -40,25 +28,16 @@ def load_players(df: pd.DataFrame, conn):
                 row["player_id"],
                 row["username"],
                 row["email"],
-                row["registration_date"],
-                row["country"],
-                row["level"],
+                row["registration_date"]
             ),
         )
 
     conn.commit()
     cursor.close()
-    print(f"{len(df)} joueurs chargés ou mis à jour.")
-
+    print(f"✅ {len(df)} joueurs chargés ou mis à jour.")
 
 def load_scores(df: pd.DataFrame, conn):
-    """
-    Insère ou met à jour les scores dans la table 'scores'.
-    
-    Args:
-        df (pd.DataFrame): DataFrame des scores transformés.
-        conn: Connexion MySQL active.
-    """
+    """Insère les scores transformés dans la table 'scores'."""
     df = clean_for_mysql(df)
     cursor = conn.cursor()
 
@@ -80,13 +59,14 @@ def load_scores(df: pd.DataFrame, conn):
             (
                 row["score_id"],
                 row["player_id"],
-                row["game"],
+                row.get("game", "Inconnu"),
                 row["score"],
-                row["duration_minutes"],
+                row.get("duration_minutes", 0),
                 row["played_at"],
-                row["platform"],
+                row.get("platform", "PC")
             ),
         )
 
     conn.commit()
     cursor.close()
+    print(f"✅ {len(df)} scores chargés ou mis à jour.")
