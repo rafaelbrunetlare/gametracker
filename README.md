@@ -1,4 +1,4 @@
-# 🎮 GameTracker – Pipeline ETL
+# GameTracker – Pipeline ETL
 
 GameTracker est un projet ETL (Extract, Transform, Load) permettant d’ingérer des données
 de joueurs et de scores de jeux vidéo à partir de fichiers CSV, de les nettoyer, de les
@@ -6,7 +6,7 @@ stocker dans une base de données MySQL, puis de générer un rapport de synthè
 
 ---
 
-## 📋 Prérequis techniques
+## Prérequis techniques
 
 - Docker
 - Docker Compose
@@ -15,16 +15,24 @@ stocker dans une base de données MySQL, puis de générer un rapport de synthè
 
 ---
 
-## 🚀 Instructions de lancement
+## Instructions de lancement
 
-### 1️⃣ Cloner le projet
+### 1. Démarrer les conteneurs
 ```bash
-git clone <url-du-repo>
-cd gametracker-etl
+docker-compose up -d
+```
+### 2. Lancer le pipeline ETL complet
+```bash
+bash run_etl.sh
+```
+Le script exécute automatiquement :
+- L’attente de la base de données MySQL
+- L’initialisation des tables
+- L’exécution du pipeline ETL Python
+- La génération du rapport final
 
-Lancer le pipeline ETL complet : bash run_etl.sh
 
-Structure du projet :
+### Structure du projet :
 gametracker/
 ├── docker-compose.yml
 ├── Dockerfile
@@ -53,20 +61,20 @@ gametracker/
 
 
 
-Problèmes de qualité des données traités : 
-Players
+## Problèmes de qualité des données traités : 
+### Players
 - Suppression des doublons sur player_id
 - Nettoyage des espaces dans les username
 - Conversion des dates invalides
 - Suppression des emails invalides
 
-Scores
+### Scores
 - Suppression des doublons sur score_id
 - Conversion des types (dates, scores, durées)
 - Suppression des scores négatifs ou nuls
 - Suppression des scores liés à des joueurs inexistants
 
-Rapport généré :
+## Rapport généré :
 - Le fichier output/rapport.txt contient :
 - Statistiques générales (joueurs, scores, jeux)
 - Top 5 des meilleurs scores
