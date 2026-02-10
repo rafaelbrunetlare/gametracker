@@ -23,7 +23,6 @@ echo "[1/4] Attente de la base de données..."
 echo "Base de données prête ✅"
 
 # 2️⃣ Initialisation des tables
-# IMPORTANT : On appelle mysql directement puisqu'on est déjà dans le conteneur app
 echo "[2/4] Initialisation des tables..."
 mysql --skip-ssl -h "$HOST" -u "$USER" -p"$PASSWORD" "$DATABASE" < scripts/init-db.sql
 echo "Tables initialisées ✅"
