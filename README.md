@@ -33,6 +33,7 @@ Le script exécute automatiquement :
 
 
 ### Structure du projet :
+```text
 gametracker/
 ├── docker-compose.yml
 ├── Dockerfile
@@ -58,7 +59,7 @@ gametracker/
 │   └── main.py
 └── output/
     └── rapport.txt
-
+```
 
 
 ## Problèmes de qualité des données traités : 
